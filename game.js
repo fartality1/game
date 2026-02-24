@@ -16,7 +16,7 @@ let hitSound = new Audio("hit.mp3");
 let pointSound = new Audio("point.mp3");
 
 // Bird physics
-let birdY = 200;
+let birdY = 100;
 let velocity = 0;
 let gravity = 0.4;
 let jumpForce = -8;
