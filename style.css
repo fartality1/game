@@ -1,14 +1,26 @@
-body {
-    margin: 0;
-    padding: 0;
-    background: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+body{
+margin:0;
+padding:0;
+background:black;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+height:100vh;
 }
 
-canvas {
-    background-color: #000;
-    display: block;
+canvas{
+display:block;
+}
+
+#pauseBtn{
+position:absolute;
+top:20px;
+right:20px;
+padding:10px 15px;
+font-size:16px;
+border:none;
+border-radius:6px;
+background:#ffffff;
+cursor:pointer;
 }
