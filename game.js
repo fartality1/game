@@ -10,11 +10,16 @@ let bird = new Image();
 bird.src = "face.png";
 
 // Sounds
-let jumpSound = new Audio("music1.mp3");
-let scoreSound = new Audio("music2.mp3");
+let music1 = new Audio("music1.mp3");
+let music2 = new Audio("music2.mp3");
 let gameOverSound = new Audio("gameover.mp3");
 
-// Physics (faster gameplay)
+music1.loop = true;
+music2.loop = true;
+
+let currentMusic = music1;
+
+// Physics (fast gameplay)
 let birdX = 60;
 let birdY = 200;
 let gravity = 0.18;
@@ -44,23 +49,30 @@ function jump(){
 
     if(!gameStarted){
         gameStarted = true;
+
+        // Start background music
+        currentMusic.play();
+
         return;
     }
 
     if(paused || gameOver) return;
 
     velocity = jumpForce;
-
-    jumpSound.currentTime = 0;
-    jumpSound.play();
 }
 
-// Pause toggle
+// Pause
 function togglePause(){
 
     if(!gameStarted || gameOver) return;
 
     paused = !paused;
+
+    if(paused){
+        currentMusic.pause();
+    } else {
+        currentMusic.play();
+    }
 }
 
 // Controls
@@ -112,6 +124,8 @@ function gameLoop(){
     if(birdY < 0 || birdY + 40 > canvas.height){
 
         gameOver = true;
+
+        currentMusic.pause();
         gameOverSound.play();
 
         alert("Game Over! Score: " + score);
@@ -137,6 +151,8 @@ function gameLoop(){
                birdY + 35 > pipe.height + pipeGap + 15){
 
                 gameOver = true;
+
+                currentMusic.pause();
                 gameOverSound.play();
 
                 alert("Game Over! Score: " + score);
@@ -149,10 +165,17 @@ function gameLoop(){
         if(!pipe.passed && pipe.x + pipeWidth < birdX){
 
             score++;
-            scoreSound.currentTime = 0;
-            scoreSound.play();
-
             pipe.passed = true;
+
+            // Switch music after 10 points
+            if(score === 10){
+
+                currentMusic.pause();
+
+                currentMusic = music2;
+                currentMusic.currentTime = 0;
+                currentMusic.play();
+            }
         }
     }
 
