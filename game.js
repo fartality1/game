@@ -1,6 +1,7 @@
-// Canvas
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+
+const pauseBtn = document.getElementById("pauseBtn");
 
 // Images
 let bg = new Image();
@@ -19,7 +20,7 @@ music2.loop = true;
 
 let currentMusic = music1;
 
-// Physics (fast gameplay)
+// Physics
 let birdX = 60;
 let birdY = 200;
 let gravity = 0.18;
@@ -34,166 +35,184 @@ let pipeWidth = 60;
 
 // Game state
 let score = 0;
+let scoreScale = 1;
 let gameStarted = false;
 let paused = false;
-let gameOver = false;
+let gameOverFlag = false;
 
 // First pipe
 pipes.push({
-    x: canvas.width + 150,
-    height: Math.random() * 200 + 100
+x: canvas.width + 150,
+height: Math.random() * 200 + 100
 });
 
-// Jump / Start
+// Jump
 function jump(){
 
-    if(!gameStarted){
-        gameStarted = true;
-
-        // Start background music
-        currentMusic.play();
-
-        return;
-    }
-
-    if(paused || gameOver) return;
-
-    velocity = jumpForce;
+if(!gameStarted){
+gameStarted = true;
+currentMusic.play();
+return;
 }
 
-// Pause
-function togglePause(){
+if(paused || gameOverFlag) return;
 
-    if(!gameStarted || gameOver) return;
+velocity = jumpForce;
 
-    paused = !paused;
+}
 
-    if(paused){
-        currentMusic.pause();
-    } else {
-        currentMusic.play();
-    }
+// Pause button
+pauseBtn.onclick = function(){
+
+if(!gameStarted || gameOverFlag) return;
+
+paused = !paused;
+
+if(paused){
+pauseBtn.innerText="▶ Resume";
+currentMusic.pause();
+}else{
+pauseBtn.innerText="⏸ Pause";
+currentMusic.play();
+}
+
+}
+
+// Game Over
+function gameOver(){
+
+if(gameOverFlag) return;
+
+gameOverFlag=true;
+
+currentMusic.pause();
+
+gameOverSound.currentTime=0;
+gameOverSound.play();
+
+setTimeout(()=>{
+alert("Game Over! Score: "+score);
+location.reload();
+},1500);
+
 }
 
 // Controls
-canvas.addEventListener("click", jump);
-canvas.addEventListener("touchstart", jump);
+canvas.addEventListener("click",jump);
+canvas.addEventListener("touchstart",jump);
 
-document.addEventListener("keydown", function(e){
-
-    if(e.code === "Space") jump();
-
-    if(e.code === "KeyP") togglePause();
-
+document.addEventListener("keydown",(e)=>{
+if(e.code==="Space") jump();
 });
 
 // Game loop
 function gameLoop(){
 
-    ctx.drawImage(bg,0,0,canvas.width,canvas.height);
+ctx.drawImage(bg,0,0,canvas.width,canvas.height);
 
-    // Start screen
-    if(!gameStarted){
+if(!gameStarted){
 
-        ctx.fillStyle="white";
-        ctx.font="40px Arial";
-        ctx.fillText("Tap to Start",90,300);
+ctx.fillStyle="white";
+ctx.font="40px Arial";
+ctx.fillText("Tap to Start",90,300);
 
-        requestAnimationFrame(gameLoop);
-        return;
-    }
+requestAnimationFrame(gameLoop);
+return;
+}
 
-    // Pause screen
-    if(paused){
+if(paused){
 
-        ctx.fillStyle="white";
-        ctx.font="28px Arial";
-        ctx.fillText("Continue chey ra kojja",60,300);
+ctx.fillStyle="white";
+ctx.font="28px Arial";
+ctx.fillText("Continue chey ra kojja",60,300);
 
-        requestAnimationFrame(gameLoop);
-        return;
-    }
+requestAnimationFrame(gameLoop);
+return;
+}
 
-    // Physics
-    velocity += gravity;
-    birdY += velocity;
+// Bird physics
+velocity+=gravity;
+birdY+=velocity;
 
-    ctx.drawImage(bird,birdX,birdY,40,40);
+ctx.drawImage(bird,birdX,birdY,40,40);
 
-    // Boundaries
-    if(birdY < 0 || birdY + 40 > canvas.height){
+// Boundaries
+if(birdY<0 || birdY+40>canvas.height){
+gameOver();
+return;
+}
 
-        gameOver = true;
+// Pipes
+for(let pipe of pipes){
 
-        currentMusic.pause();
-        gameOverSound.play();
+pipe.x-=pipeSpeed;
 
-        alert("Game Over! Score: " + score);
-        location.reload();
-        return;
-    }
+ctx.fillStyle="green";
 
-    // Pipes
-    for(let pipe of pipes){
+ctx.fillRect(pipe.x,0,pipeWidth,pipe.height);
+ctx.fillRect(pipe.x,pipe.height+pipeGap,pipeWidth,canvas.height);
 
-        pipe.x -= pipeSpeed;
+// Collision
+if(pipe.x < birdX+35 && pipe.x+pipeWidth > birdX+5){
 
-        ctx.fillStyle="green";
+if(birdY < pipe.height-15 ||
+birdY+35 > pipe.height+pipeGap+15){
 
-        ctx.fillRect(pipe.x,0,pipeWidth,pipe.height);
+gameOver();
+return;
 
-        ctx.fillRect(pipe.x,pipe.height + pipeGap,pipeWidth,canvas.height);
+}
 
-        // Collision
-        if(pipe.x < birdX + 35 && pipe.x + pipeWidth > birdX + 5){
+}
 
-            if(birdY < pipe.height - 15 ||
-               birdY + 35 > pipe.height + pipeGap + 15){
+// Score
+if(!pipe.passed && pipe.x+pipeWidth < birdX){
 
-                gameOver = true;
+score++;
+pipe.passed=true;
 
-                currentMusic.pause();
-                gameOverSound.play();
+scoreScale = 1.6;
 
-                alert("Game Over! Score: " + score);
-                location.reload();
-                return;
-            }
-        }
+// Music change at 10
+if(score===10){
 
-        // Score
-        if(!pipe.passed && pipe.x + pipeWidth < birdX){
+currentMusic.pause();
 
-            score++;
-            pipe.passed = true;
+currentMusic=music2;
+currentMusic.currentTime=0;
+currentMusic.play();
 
-            // Switch music after 10 points
-            if(score === 10){
+}
 
-                currentMusic.pause();
+}
 
-                currentMusic = music2;
-                currentMusic.currentTime = 0;
-                currentMusic.play();
-            }
-        }
-    }
+}
 
-    // Add new pipe
-    if(pipes[pipes.length - 1].x < canvas.width - 250){
+// Add pipes
+if(pipes[pipes.length-1].x < canvas.width-250){
 
-        pipes.push({
-            x: canvas.width,
-            height: Math.random()*200 + 100
-        });
-    }
+pipes.push({
+x:canvas.width,
+height:Math.random()*200+100
+});
 
-    // Score display
-    ctx.fillStyle="white";
-    ctx.font="32px Arial";
-    ctx.fillText("Score: " + score,10,40);
+}
 
-    requestAnimationFrame(gameLoop);
+// Score animation
+scoreScale += (1-scoreScale)*0.1;
+
+ctx.save();
+ctx.translate(10,40);
+ctx.scale(scoreScale,scoreScale);
+
+ctx.fillStyle="white";
+ctx.font="32px Arial";
+ctx.fillText("Score: "+score,0,0);
+
+ctx.restore();
+
+requestAnimationFrame(gameLoop);
+
 }
 
 gameLoop();
